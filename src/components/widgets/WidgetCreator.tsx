@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { ColorPicker, ColorSwatch } from "@/components/ui/color-picker";
 import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
@@ -37,6 +36,7 @@ import {
   X,
   Code,
 } from "lucide-react";
+import { ColorPicker } from "@/components/ui/color-picker";
 
 interface WidgetCreatorProps {
   widgetId?: string;
@@ -45,6 +45,15 @@ interface WidgetCreatorProps {
   onGenerateCode?: () => void;
 }
 
+const PRESET_THEMES = [
+  { name: "Blue", primary: "#3b82f6", secondary: "#f3f4f6", text: "#111827" },
+  { name: "Purple", primary: "#8b5cf6", secondary: "#f5f3ff", text: "#1e1b4b" },
+  { name: "Green", primary: "#10b981", secondary: "#ecfdf5", text: "#064e3b" },
+  { name: "Red", primary: "#ef4444", secondary: "#fef2f2", text: "#7f1d1d" },
+  { name: "Orange", primary: "#f97316", secondary: "#fff7ed", text: "#7c2d12" },
+  { name: "Dark", primary: "#1f2937", secondary: "#f9fafb", text: "#111827" },
+];
+
 const WidgetCreator = ({
   widgetId,
   onSave = () => {},
@@ -52,6 +61,11 @@ const WidgetCreator = ({
   onGenerateCode = () => {},
 }: WidgetCreatorProps) => {
   const [activeTab, setActiveTab] = useState("appearance");
+  const [previewMode, setPreviewMode] = useState("desktop");
+  const [previewState, setPreviewState] = useState("open");
+  const [previewPosition, setPreviewPosition] = useState("bottom-right");
+  const [previewScale, setPreviewScale] = useState(1);
+
   const [widgetData, setWidgetData] = useState({
     name: widgetId ? "Customer Support Widget" : "New Widget",
     appearance: {
@@ -81,6 +95,11 @@ const WidgetCreator = ({
       contextPrompt: "You are a helpful customer support assistant.",
     },
   });
+
+  // Update preview position when widget position changes
+  useEffect(() => {
+    setPreviewPosition(widgetData.appearance.position);
+  }, [widgetData.appearance.position]);
 
   const handleAppearanceChange = (field: string, value: any) => {
     setWidgetData({
@@ -193,168 +212,250 @@ const WidgetCreator = ({
             <TabsContent value="appearance" className="space-y-4">
               <Card>
                 <CardContent className="pt-6 space-y-4">
-                  <div className="space-y-2">
-                    <Label>Primary Color</Label>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-8 h-8 rounded-md border"
-                        style={{
-                          backgroundColor: widgetData.appearance.primaryColor,
-                        }}
-                      />
-                      <Input
-                        type="text"
-                        value={widgetData.appearance.primaryColor}
-                        onChange={(e) =>
-                          handleAppearanceChange("primaryColor", e.target.value)
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="mb-2 block">Theme Presets</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {PRESET_THEMES.map((theme, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            className="h-auto p-2 flex flex-col items-center justify-center gap-1 hover:border-primary"
+                            onClick={() => {
+                              handleAppearanceChange(
+                                "primaryColor",
+                                theme.primary,
+                              );
+                              handleAppearanceChange(
+                                "secondaryColor",
+                                theme.secondary,
+                              );
+                              handleAppearanceChange("textColor", theme.text);
+                            }}
+                          >
+                            <div className="flex gap-1">
+                              <div
+                                className="w-4 h-4 rounded-full"
+                                style={{ backgroundColor: theme.primary }}
+                              />
+                              <div
+                                className="w-4 h-4 rounded-full"
+                                style={{ backgroundColor: theme.secondary }}
+                              />
+                            </div>
+                            <span className="text-xs">{theme.name}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-2">
+                      <Label>Primary Color</Label>
+                      <ColorPicker
+                        color={widgetData.appearance.primaryColor}
+                        onChange={(color) =>
+                          handleAppearanceChange("primaryColor", color)
                         }
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label>Secondary Color</Label>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-8 h-8 rounded-md border"
-                        style={{
-                          backgroundColor: widgetData.appearance.secondaryColor,
-                        }}
-                      />
-                      <Input
-                        type="text"
-                        value={widgetData.appearance.secondaryColor}
-                        onChange={(e) =>
-                          handleAppearanceChange(
-                            "secondaryColor",
-                            e.target.value,
-                          )
+                    <div className="space-y-2">
+                      <Label>Secondary Color</Label>
+                      <ColorPicker
+                        color={widgetData.appearance.secondaryColor}
+                        onChange={(color) =>
+                          handleAppearanceChange("secondaryColor", color)
                         }
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label>Text Color</Label>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-8 h-8 rounded-md border"
-                        style={{
-                          backgroundColor: widgetData.appearance.textColor,
-                        }}
-                      />
-                      <Input
-                        type="text"
-                        value={widgetData.appearance.textColor}
-                        onChange={(e) =>
-                          handleAppearanceChange("textColor", e.target.value)
+                    <div className="space-y-2">
+                      <Label>Text Color</Label>
+                      <ColorPicker
+                        color={widgetData.appearance.textColor}
+                        onChange={(color) =>
+                          handleAppearanceChange("textColor", color)
                         }
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label>
-                      Border Radius: {widgetData.appearance.borderRadius}px
-                    </Label>
-                    <Slider
-                      min={0}
-                      max={20}
-                      step={1}
-                      value={[widgetData.appearance.borderRadius]}
-                      onValueChange={(value) =>
-                        handleAppearanceChange("borderRadius", value[0])
-                      }
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label>
+                        Border Radius: {widgetData.appearance.borderRadius}px
+                      </Label>
+                      <Slider
+                        min={0}
+                        max={20}
+                        step={1}
+                        value={[widgetData.appearance.borderRadius]}
+                        onValueChange={(value) =>
+                          handleAppearanceChange("borderRadius", value[0])
+                        }
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Position</Label>
-                    <Select
-                      value={widgetData.appearance.position}
-                      onValueChange={(value) =>
-                        handleAppearanceChange("position", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select position" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <div className="space-y-2">
+                      <Label>Position</Label>
+                      <div className="grid grid-cols-2 gap-2">
                         {positionOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
+                          <Button
+                            key={option.value}
+                            type="button"
+                            variant={
+                              widgetData.appearance.position === option.value
+                                ? "default"
+                                : "outline"
+                            }
+                            className="justify-start"
+                            onClick={() => {
+                              handleAppearanceChange("position", option.value);
+                              setPreviewPosition(option.value);
+                            }}
+                          >
                             {option.label}
-                          </SelectItem>
+                          </Button>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      </div>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Width: {widgetData.appearance.width}px</Label>
-                    <Slider
-                      min={250}
-                      max={500}
-                      step={10}
-                      value={[widgetData.appearance.width]}
-                      onValueChange={(value) =>
-                        handleAppearanceChange("width", value[0])
-                      }
-                    />
-                  </div>
+                    <div className="space-y-2 mt-4">
+                      <Label>Preview Scale: {previewScale.toFixed(1)}x</Label>
+                      <Slider
+                        min={0.5}
+                        max={1.5}
+                        step={0.1}
+                        value={[previewScale]}
+                        onValueChange={(value) => setPreviewScale(value[0])}
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Height: {widgetData.appearance.height}px</Label>
-                    <Slider
-                      min={300}
-                      max={700}
-                      step={10}
-                      value={[widgetData.appearance.height]}
-                      onValueChange={(value) =>
-                        handleAppearanceChange("height", value[0])
-                      }
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Width: {widgetData.appearance.width}px</Label>
+                      <Slider
+                        min={250}
+                        max={500}
+                        step={10}
+                        value={[widgetData.appearance.width]}
+                        onValueChange={(value) =>
+                          handleAppearanceChange("width", value[0])
+                        }
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Font Family</Label>
-                    <Select
-                      value={widgetData.appearance.fontFamily}
-                      onValueChange={(value) =>
-                        handleAppearanceChange("fontFamily", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select font" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <div className="space-y-2">
+                      <Label>Height: {widgetData.appearance.height}px</Label>
+                      <Slider
+                        min={300}
+                        max={700}
+                        step={10}
+                        value={[widgetData.appearance.height]}
+                        onValueChange={(value) =>
+                          handleAppearanceChange("height", value[0])
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Font Family</Label>
+                      <div className="grid grid-cols-2 gap-2">
                         {fontOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
+                          <Button
+                            key={option.value}
+                            type="button"
+                            variant={
+                              widgetData.appearance.fontFamily === option.value
+                                ? "default"
+                                : "outline"
+                            }
+                            className="justify-start"
+                            style={{ fontFamily: option.value }}
+                            onClick={() =>
+                              handleAppearanceChange("fontFamily", option.value)
+                            }
+                          >
                             {option.label}
-                          </SelectItem>
+                          </Button>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      </div>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Icon Type</Label>
-                    <Select
-                      value={widgetData.appearance.iconType}
-                      onValueChange={(value) =>
-                        handleAppearanceChange("iconType", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select icon" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <div className="space-y-2">
+                      <Label>Icon Type</Label>
+                      <div className="grid grid-cols-4 gap-2">
                         {iconOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
+                          <Button
+                            key={option.value}
+                            type="button"
+                            variant={
+                              widgetData.appearance.iconType === option.value
+                                ? "default"
+                                : "outline"
+                            }
+                            className="h-auto py-2 px-3"
+                            onClick={() =>
+                              handleAppearanceChange("iconType", option.value)
+                            }
+                          >
+                            {option.value === "chat" && (
+                              <MessageSquare className="h-4 w-4 mx-auto mb-1" />
+                            )}
+                            {option.value === "message" && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="mx-auto mb-1"
+                              >
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                              </svg>
+                            )}
+                            {option.value === "help" && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="mx-auto mb-1"
+                              >
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                              </svg>
+                            )}
+                            {option.value === "support" && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="mx-auto mb-1"
+                              >
+                                <path d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0z"></path>
+                              </svg>
+                            )}
+                            <span className="text-xs">{option.label}</span>
+                          </Button>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -362,15 +463,23 @@ const WidgetCreator = ({
 
             <TabsContent value="behavior" className="space-y-4">
               <Card>
-                <CardContent className="pt-6 space-y-4">
+                <CardContent className="pt-6 space-y-6">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="auto-open">Auto Open</Label>
+                    <div>
+                      <Label htmlFor="auto-open" className="mb-1 block">
+                        Auto Open
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Automatically open chat when page loads
+                      </p>
+                    </div>
                     <Switch
                       id="auto-open"
                       checked={widgetData.behavior.autoOpen}
-                      onCheckedChange={(checked) =>
-                        handleBehaviorChange("autoOpen", checked)
-                      }
+                      onCheckedChange={(checked) => {
+                        handleBehaviorChange("autoOpen", checked);
+                        if (checked) setPreviewState("open");
+                      }}
                     />
                   </div>
 
@@ -412,7 +521,14 @@ const WidgetCreator = ({
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="show-timestamp">Show Timestamp</Label>
+                    <div>
+                      <Label htmlFor="show-timestamp" className="mb-1 block">
+                        Show Timestamp
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Display time for each message
+                      </p>
+                    </div>
                     <Switch
                       id="show-timestamp"
                       checked={widgetData.behavior.showTimestamp}
@@ -423,9 +539,17 @@ const WidgetCreator = ({
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="persist-conversation">
-                      Persist Conversation
-                    </Label>
+                    <div>
+                      <Label
+                        htmlFor="persist-conversation"
+                        className="mb-1 block"
+                      >
+                        Persist Conversation
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Save chat history between sessions
+                      </p>
+                    </div>
                     <Switch
                       id="persist-conversation"
                       checked={widgetData.behavior.persistConversation}
@@ -436,7 +560,14 @@ const WidgetCreator = ({
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="collect-user-info">Collect User Info</Label>
+                    <div>
+                      <Label htmlFor="collect-user-info" className="mb-1 block">
+                        Collect User Info
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Ask for name and email before chat
+                      </p>
+                    </div>
                     <Switch
                       id="collect-user-info"
                       checked={widgetData.behavior.collectUserInfo}
@@ -454,23 +585,105 @@ const WidgetCreator = ({
                 <CardContent className="pt-6 space-y-6">
                   <div className="space-y-2">
                     <Label>AI Model</Label>
-                    <Select
-                      value={widgetData.aiModel.modelId}
-                      onValueChange={(value) =>
-                        handleAIModelChange("modelId", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select AI model" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {aiModelOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="grid grid-cols-2 gap-2">
+                      {aiModelOptions.map((option) => (
+                        <Button
+                          key={option.value}
+                          type="button"
+                          variant={
+                            widgetData.aiModel.modelId === option.value
+                              ? "default"
+                              : "outline"
+                          }
+                          className="justify-start"
+                          onClick={() =>
+                            handleAIModelChange("modelId", option.value)
+                          }
+                        >
+                          {option.value === "gpt-3.5" && (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="mr-2"
+                            >
+                              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                              <polyline points="3.29 7 12 12 20.71 7"></polyline>
+                              <line x1="12" y1="22" x2="12" y2="12"></line>
+                            </svg>
+                          )}
+                          {option.value === "gpt-4" && (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="mr-2"
+                            >
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path>
+                              <path d="M12 6v2"></path>
+                              <path d="M12 16v2"></path>
+                            </svg>
+                          )}
+                          {option.value === "claude-2" && (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="mr-2"
+                            >
+                              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                          )}
+                          {option.value === "custom" && (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="mr-2"
+                            >
+                              <path d="M12 20h9"></path>
+                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                            </svg>
+                          )}
+                          {option.label}
+                        </Button>
+                      ))}
+                    </div>
+
+                    {widgetData.aiModel.modelId === "custom" && (
+                      <div className="mt-2">
+                        <Input
+                          placeholder="Enter custom model name or endpoint"
+                          className="mt-2"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -544,135 +757,259 @@ const WidgetCreator = ({
         </div>
 
         {/* Right side - Preview */}
-        <div className="w-1/2 p-4 flex flex-col">
-          <div className="mb-4">
-            <h3 className="text-lg font-medium mb-2">Live Preview</h3>
-            <p className="text-sm text-muted-foreground">
-              This is how your widget will appear to users.
-            </p>
+        <div className="w-1/2 p-4 flex flex-col bg-background">
+          <div className="mb-4 flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-medium mb-1">Live Preview</h3>
+              <p className="text-sm text-muted-foreground">
+                Changes appear in real-time as you customize
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <div className="flex bg-muted rounded-md p-0.5">
+                <Button
+                  variant={previewMode === "mobile" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setPreviewMode("mobile")}
+                  className="flex items-center gap-1 h-8 px-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+                    <path d="M12 18h.01" />
+                  </svg>
+                  <span className="text-xs">Mobile</span>
+                </Button>
+                <Button
+                  variant={previewMode === "tablet" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setPreviewMode("tablet")}
+                  className="flex items-center gap-1 h-8 px-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
+                    <line x1="12" y1="18" x2="12.01" y2="18" />
+                  </svg>
+                  <span className="text-xs">Tablet</span>
+                </Button>
+                <Button
+                  variant={previewMode === "desktop" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setPreviewMode("desktop")}
+                  className="flex items-center gap-1 h-8 px-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect width="20" height="14" x="2" y="5" rx="2" ry="2" />
+                    <line x1="2" x2="22" y1="10" y2="10" />
+                  </svg>
+                  <span className="text-xs">Desktop</span>
+                </Button>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setPreviewState(previewState === "open" ? "closed" : "open")
+                }
+              >
+                {previewState === "open" ? "Show Closed" : "Show Open"}
+              </Button>
+            </div>
           </div>
 
-          <div className="flex-1 flex items-center justify-center bg-muted/30 rounded-lg relative overflow-hidden">
-            <div
-              className="relative shadow-lg"
-              style={{
-                width: `${widgetData.appearance.width}px`,
-                height: `${widgetData.appearance.height}px`,
-                borderRadius: `${widgetData.appearance.borderRadius}px`,
-                fontFamily: widgetData.appearance.fontFamily,
-                backgroundColor: widgetData.appearance.secondaryColor,
-                color: widgetData.appearance.textColor,
-              }}
-            >
-              {/* Widget Header */}
+          <div className="flex-1 flex items-center justify-center bg-muted/30 rounded-lg relative overflow-hidden border border-dashed border-muted-foreground/30">
+            {previewState === "closed" && (
               <div
-                className="p-4 flex items-center justify-between"
+                className="absolute shadow-lg cursor-pointer animate-pulse transition-all duration-300"
                 style={{
+                  bottom: previewPosition.includes("bottom") ? "20px" : "auto",
+                  top: previewPosition.includes("top") ? "20px" : "auto",
+                  right: previewPosition.includes("right") ? "20px" : "auto",
+                  left: previewPosition.includes("left") ? "20px" : "auto",
+                  width: "60px",
+                  height: "60px",
+                  borderRadius: "50%",
                   backgroundColor: widgetData.appearance.primaryColor,
-                  color: "#ffffff",
-                  borderTopLeftRadius: `${widgetData.appearance.borderRadius}px`,
-                  borderTopRightRadius: `${widgetData.appearance.borderRadius}px`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transform: `scale(${previewScale})`,
+                  transition: "all 0.3s ease",
                 }}
               >
-                <h3 className="font-medium">Chat Support</h3>
-                <button className="text-white hover:opacity-80">
-                  <X className="h-4 w-4" />
-                </button>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
               </div>
+            )}
 
-              {/* Widget Body */}
-              <div className="p-4 h-[calc(100%-120px)] overflow-y-auto">
-                {/* AI Message */}
-                <div className="flex mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 mr-2" />
-                  <div
-                    className="bg-white p-3 rounded-lg max-w-[80%]"
-                    style={{
-                      borderRadius: `${widgetData.appearance.borderRadius}px`,
-                    }}
-                  >
-                    <p className="text-sm">{widgetData.behavior.greeting}</p>
-                    {widgetData.behavior.showTimestamp && (
-                      <span className="text-xs text-gray-500 block mt-1">
-                        12:05 PM
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* User Message */}
-                <div className="flex mb-4 justify-end">
-                  <div
-                    className="p-3 rounded-lg max-w-[80%]"
-                    style={{
-                      backgroundColor: widgetData.appearance.primaryColor,
-                      color: "#ffffff",
-                      borderRadius: `${widgetData.appearance.borderRadius}px`,
-                    }}
-                  >
-                    <p className="text-sm">Hello, I need help with my order.</p>
-                    {widgetData.behavior.showTimestamp && (
-                      <span className="text-xs text-gray-200 block mt-1">
-                        12:06 PM
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* AI Response */}
-                <div className="flex mb-4">
-                  <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 mr-2" />
-                  <div
-                    className="bg-white p-3 rounded-lg max-w-[80%]"
-                    style={{
-                      borderRadius: `${widgetData.appearance.borderRadius}px`,
-                    }}
-                  >
-                    <p className="text-sm">
-                      I'd be happy to help with your order. Could you please
-                      provide your order number?
-                    </p>
-                    {widgetData.behavior.showTimestamp && (
-                      <span className="text-xs text-gray-500 block mt-1">
-                        12:07 PM
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Widget Input */}
+            {previewState === "open" && (
               <div
-                className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white"
+                className="relative shadow-lg transition-all duration-300"
                 style={{
-                  borderBottomLeftRadius: `${widgetData.appearance.borderRadius}px`,
-                  borderBottomRightRadius: `${widgetData.appearance.borderRadius}px`,
+                  width:
+                    previewMode === "mobile"
+                      ? "320px"
+                      : previewMode === "tablet"
+                        ? "480px"
+                        : `${widgetData.appearance.width}px`,
+                  height:
+                    previewMode === "mobile"
+                      ? "520px"
+                      : previewMode === "tablet"
+                        ? "640px"
+                        : `${widgetData.appearance.height}px`,
+                  borderRadius: `${widgetData.appearance.borderRadius}px`,
+                  fontFamily: widgetData.appearance.fontFamily,
+                  backgroundColor: widgetData.appearance.secondaryColor,
+                  color: widgetData.appearance.textColor,
+                  transform: `scale(${previewScale})`,
+                  transition: "all 0.3s ease",
                 }}
               >
-                <div className="flex">
-                  <Input
-                    className="flex-1 mr-2"
-                    placeholder={widgetData.behavior.placeholder}
-                  />
-                  <Button
-                    size="sm"
-                    style={{
-                      backgroundColor: widgetData.appearance.primaryColor,
-                    }}
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                  </Button>
+                {/* Widget Header */}
+                <div
+                  className="p-4 flex items-center justify-between"
+                  style={{
+                    backgroundColor: widgetData.appearance.primaryColor,
+                    color: "#ffffff",
+                    borderTopLeftRadius: `${widgetData.appearance.borderRadius}px`,
+                    borderTopRightRadius: `${widgetData.appearance.borderRadius}px`,
+                  }}
+                >
+                  <h3 className="font-medium">Chat Support</h3>
+                  <button className="text-white hover:opacity-80">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Widget Body */}
+                <div className="p-4 h-[calc(100%-120px)] overflow-y-auto">
+                  {/* AI Message */}
+                  <div className="flex mb-4">
+                    <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 mr-2" />
+                    <div
+                      className="bg-white p-3 rounded-lg max-w-[80%]"
+                      style={{
+                        borderRadius: `${widgetData.appearance.borderRadius}px`,
+                      }}
+                    >
+                      <p className="text-sm">{widgetData.behavior.greeting}</p>
+                      {widgetData.behavior.showTimestamp && (
+                        <span className="text-xs text-gray-500 block mt-1">
+                          12:05 PM
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* User Message */}
+                  <div className="flex mb-4 justify-end">
+                    <div
+                      className="p-3 rounded-lg max-w-[80%]"
+                      style={{
+                        backgroundColor: widgetData.appearance.primaryColor,
+                        color: "#ffffff",
+                        borderRadius: `${widgetData.appearance.borderRadius}px`,
+                      }}
+                    >
+                      <p className="text-sm">
+                        Hello, I need help with my order.
+                      </p>
+                      {widgetData.behavior.showTimestamp && (
+                        <span className="text-xs text-gray-200 block mt-1">
+                          12:06 PM
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* AI Response */}
+                  <div className="flex mb-4">
+                    <div className="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0 mr-2" />
+                    <div
+                      className="bg-white p-3 rounded-lg max-w-[80%]"
+                      style={{
+                        borderRadius: `${widgetData.appearance.borderRadius}px`,
+                      }}
+                    >
+                      <p className="text-sm">
+                        I'd be happy to help with your order. Could you please
+                        provide your order number?
+                      </p>
+                      {widgetData.behavior.showTimestamp && (
+                        <span className="text-xs text-gray-500 block mt-1">
+                          12:07 PM
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Widget Input */}
+                <div
+                  className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white"
+                  style={{
+                    borderBottomLeftRadius: `${widgetData.appearance.borderRadius}px`,
+                    borderBottomRightRadius: `${widgetData.appearance.borderRadius}px`,
+                  }}
+                >
+                  <div className="flex">
+                    <Input
+                      className="flex-1 mr-2"
+                      placeholder={widgetData.behavior.placeholder}
+                    />
+                    <Button
+                      size="sm"
+                      style={{
+                        backgroundColor: widgetData.appearance.primaryColor,
+                      }}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Widget Button */}
-            <div
-              className="absolute bottom-4 right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg cursor-pointer"
-              style={{ backgroundColor: widgetData.appearance.primaryColor }}
-            >
-              <MessageSquare className="h-6 w-6 text-white" />
-            </div>
+            )}
           </div>
 
           <div className="mt-4">
