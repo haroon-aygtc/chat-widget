@@ -13,6 +13,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Header from "@/components/dashboard/Header";
+import Sidebar from "@/components/dashboard/Sidebar";
 import { mockUsers, mockRoles, mockPermissions } from "./data";
 import { User, Role, Permission } from "./types";
 

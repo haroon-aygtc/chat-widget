@@ -4,6 +4,7 @@ import Home from "./components/home";
 import routes from "tempo-routes";
 import WidgetManagement from "./components/widgets/WidgetManagement";
 import UserManagement from "./components/user-management/UserManagement";
+import AIModelManagement from "./components/ai-models/AIModelManagement";
 
 function App() {
   return (
@@ -12,7 +13,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/widgets" element={<WidgetManagement />} />
-          <Route path="/ai-models" element={<Home />} />
+          <Route path="/ai-models" element={<AIModelManagement />} />
           <Route path="/user-management" element={<UserManagement />} />
           <Route path="/analytics" element={<Home />} />
           <Route path="/settings" element={<Home />} />
