@@ -3,6 +3,7 @@ import { useRoutes, Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import routes from "tempo-routes";
 import WidgetManagement from "./components/widgets/WidgetManagement";
+import UserManagement from "./components/user-management/UserManagement";
 
 function App() {
   return (
@@ -12,7 +13,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/widgets" element={<WidgetManagement />} />
           <Route path="/ai-models" element={<Home />} />
-          <Route path="/users" element={<Home />} />
+          <Route path="/user-management" element={<UserManagement />} />
           <Route path="/analytics" element={<Home />} />
           <Route path="/settings" element={<Home />} />
 

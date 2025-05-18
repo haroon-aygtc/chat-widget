@@ -102,8 +102,8 @@ const Sidebar = () => {
     },
     {
       icon: <Users size={20} />,
-      label: "User Roles",
-      path: "/users",
+      label: "User Management",
+      path: "/user-management",
     },
     {
       icon: <BarChart3 size={20} />,
